@@ -6,6 +6,9 @@ TagManager:
   tags:
   - Obstacle
   - Bullet
+  - Critter
+  - Boss
+  - Bonus
   layers:
   - Default
   - TransparentFX
@@ -18,10 +21,10 @@ TagManager:
   - Obstacle
   - Bullet
   - Star
-  - 
-  - 
-  - 
-  - 
+  - Critter
+  - Boss
+  - Shield
+  - Bonus
   - 
   - 
   - 

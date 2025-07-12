@@ -2,28 +2,49 @@ using UnityEngine;
 
 public class PhaserBullet : MonoBehaviour
 {
-    // Update is called once per frame
-    void Update()
+    PhaserWeapon weapon;
+    private float speed;
+    private float maxDistance = 11f;
+    private Vector3 startPos;
+    private Vector3 direction;
+
+    private void OnEnable()
     {
-        transform.position += new Vector3(PhaserWeapon.Instance.speed * Time.deltaTime, 0f);
-        if (transform.position.x > 9f) // Assuming 10f is the right boundary of the game area
+        weapon = PhaserWeapon.Instance;
+        speed = weapon.stats[weapon.weaponLevel].speed;
+        startPos = transform.position;
+        direction = Vector3.right; // luôn bay bên phải
+    }
+
+    private void Update()
+    {
+        transform.position += speed * Time.deltaTime * direction;
+
+        if (transform.position.x > maxDistance)
         {
-            //Destroy(gameObject); // Destroy the bullet when it goes out of bounds
-            gameObject.SetActive(false); // Deactivate the bullet instead of destroying it
+            gameObject.SetActive(false);
         }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Obstacle"))
+        GameObject target = collision.gameObject;
+        if (target.CompareTag("Obstacle"))
         {
-            Asteroid asteroid = collision.gameObject.GetComponent<Asteroid>();
+            Asteroid asteroid = target.GetComponent<Asteroid>();
             if (asteroid)
-            {
-                asteroid.TakeDamage(PhaserWeapon.Instance.damage);
-            }
-
-            gameObject.SetActive(false); // Deactivate the bullet instead of destroying it
+                asteroid.TakeDamage(weapon.stats[weapon.weaponLevel].damage);
         }
+        else if (target.CompareTag("Critter"))
+        {
+            Critter critter = target.GetComponent<Critter>();
+            if (critter != null) critter.OnHitByBullet();
+        }
+        else if (target.CompareTag("Boss"))
+        {
+            Boss1 boss = target.GetComponent<Boss1>();
+            if (boss != null) boss.TakeDamage(weapon.stats[weapon.weaponLevel].damage);
+        }
+        gameObject.SetActive(false); // Deactivate the bullet instead of destroying it
     }
 }

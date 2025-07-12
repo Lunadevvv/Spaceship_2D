@@ -8,7 +8,9 @@ public class Star : MonoBehaviour
         if (collision.gameObject.CompareTag("Player"))
         {
             //AudioManager.Instance.PlaySound(AudioManager.Instance.starCollect); // Play the star collect sound
-            GameManager.Instance.AddScore(GameManager.Instance.scoreToAdd); // Add score for collecting the star
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level1")
+                Level1Manager.Instance.AddScore(Level1Manager.Instance.scoreToAdd); // Add score for collecting the star
+                AudioManager.Instance.PlaySound(AudioManager.Instance.collectStar); // Âm thanh phá hủy
             Destroy(gameObject); // Destroy the star object
         }
     }

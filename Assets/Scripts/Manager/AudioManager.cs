@@ -11,6 +11,12 @@ public class AudioManager : MonoBehaviour
     public AudioSource menuButton;
     public AudioSource boost;
     public AudioSource asteroidDestroy;
+    public AudioSource squished;
+    public AudioSource burn;
+    public AudioSource hitArmor;
+    public AudioSource bossCharge;
+    public AudioSource collectStar;
+    public AudioSource collectBonus;
 
     private void Awake() //Will run when the script instance is being loaded
     {

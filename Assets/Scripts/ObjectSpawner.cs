@@ -7,39 +7,62 @@ public class ObjectSpawner : MonoBehaviour
     private void Awake()
     {
         if (Instance != null)
-        {
             Destroy(gameObject);
-        }
         else
-        {
             Instance = this;
-        }
     }
 
+    [Header("Prefabs to Spawn")]
     [SerializeField] private GameObject asteroidPrefab;
+    [SerializeField] private GameObject bonusClaimPrefab;
     public GameObject starPrefab;
-    [SerializeField] private float spawnInterval;
-    private float spawnTimer;
 
-    // Update is called once per frame
+    [Header("Spawn Settings")]
+    [SerializeField] private float spawnX = 10f;
+    [SerializeField] private float spawnInterval = 0.35f; // spawn nhanh hơn
+    private float spawnTimer;
+    [SerializeField] private int asteroidPerSpawn = 1; // ít asteroid hơn
+
     void Update()
     {
         spawnTimer += Time.deltaTime;
         if (spawnTimer >= spawnInterval)
         {
-            SpawnObject();
+            SpawnAsteroids(asteroidPerSpawn);
+            SpawnStars();
+            SpawnBonusClaim();
             spawnTimer = 0f;
         }
     }
 
-    void SpawnObject()
+    void SpawnAsteroids(int count)
     {
-        float randomY = Random.Range(-4.3f, 4.1f);
-        Vector3 spawnPosition = new Vector3(transform.position.x, randomY, 0f);
-        Instantiate(asteroidPrefab, spawnPosition, transform.rotation);
-        if (Random.value < 0.1f) // 10% chance to spawn a star
+        for (int i = 0; i < count; i++)
         {
-            Instantiate(starPrefab, spawnPosition, transform.rotation);
+            float randomY = Random.Range(-4.5f, 4.5f);
+            float offsetX = Random.Range(0f, 2f); // spawn bên phải màn hình
+            Vector3 spawnPos = new Vector3(spawnX + offsetX, randomY, 0f);
+            Instantiate(asteroidPrefab, spawnPos, Quaternion.identity);
+        }
+    }
+
+    void SpawnStars()
+    {
+        if (Random.value < 0.2f) // 20% xác suất spawn sao
+        {
+            float randomY = Random.Range(-4.5f, 4.5f);
+            Vector3 spawnPos = new Vector3(spawnX + 1f, randomY, 0f);
+            Instantiate(starPrefab, spawnPos, Quaternion.identity);
+        }
+    }
+
+    void SpawnBonusClaim()
+    {
+        if (Random.value < 0.05f) // 5% xác suất spawn bonus
+        {
+            float randomY = Random.Range(-4.5f, 4.5f);
+            Vector3 spawnPos = new Vector3(spawnX + 1f, randomY, 0f);
+            Instantiate(bonusClaimPrefab, spawnPos, Quaternion.identity);
         }
     }
 }

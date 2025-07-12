@@ -1,13 +1,14 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public static PlayerController Instance; //Create an instance to use public variable (Singleton)
+    public static PlayerController Instance;
 
-    private Rigidbody2D rigidbody2D;
+    private Rigidbody2D rb;
     private Animator animator;
-    private Collider2D collider2D;
+    private Collider2D col;
     private SpriteRenderer playerSprite;
 
     private bool isInvincible = false;
@@ -16,7 +17,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 playerDirection;
     public float boost = 1f;
     private float boostPower = 5f;
-    private bool isBoosting;
+    public bool isBoosting;
 
     private float energy;
     [SerializeField] private float maxEnergy;
@@ -26,83 +27,85 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float health;
     [SerializeField] private float maxHealth;
 
-    [SerializeField] private GameObject destroyEffect; // Reference to the destroy effect prefab
+    [SerializeField] private GameObject destroyEffect;
+    [SerializeField] private GameObject shield;
 
-    private void Awake() //Will run when the script instance is being loaded
+    [SerializeField] private float fireRate = 0.2f;
+    private float nextFireTime;
+
+    private void Awake()
     {
-        if (Instance != null) //Instance already existed. Make sure not duplicate
-        {
+        if (Instance != null)
             Destroy(gameObject);
-        }
         else
-        {
             Instance = this;
-        }
     }
 
     void Start()
     {
-        rigidbody2D = GetComponent<Rigidbody2D>();
+        rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        collider2D = GetComponent<Collider2D>();
+        col = GetComponent<Collider2D>();
         playerSprite = GetComponent<SpriteRenderer>();
+
         energy = maxEnergy;
         health = maxHealth;
+
         UIController.Instance.UpdateEnergySlider(energy, maxEnergy);
         UIController.Instance.UpdateHealthSlider(health, maxHealth);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if(Time.timeScale > 0)
-        {
-            float directionX = Input.GetAxisRaw("Horizontal");
-            float directionY = Input.GetAxisRaw("Vertical");
-            animator.SetFloat("MoveX", directionX);
-            animator.SetFloat("MoveY", directionY);
-            playerDirection = new Vector2(directionX, directionY).normalized;
+        if (Time.timeScale <= 0) return;
 
-            if (Input.GetKeyDown(KeyCode.LeftShift) & energy >= 10)
-            {
-                EnterBoost();
-            }
-            else if (Input.GetKeyUp(KeyCode.LeftShift))
-            {
-                ExitBoost();
-            }else if (Input.GetKeyDown(KeyCode.Mouse0)){
-                AudioManager.Instance.PlaySound(AudioManager.Instance.shoot); // Play shoot sound
-                PhaserWeapon.Instance.Shoot(); // Call the Shoot method from PhaserWeapon
-            }
+        float directionX = Input.GetAxisRaw("Horizontal");
+        float directionY = Input.GetAxisRaw("Vertical");
+        playerDirection = new Vector2(directionX, directionY).normalized;
+
+        animator.SetFloat("MoveX", directionX);
+        animator.SetFloat("MoveY", directionY);
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && energy >= 10)
+        {
+            EnterBoost();
+        }
+        else if (Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            ExitBoost();
+        }
+
+        if (Input.GetKey(KeyCode.Mouse0) && Time.time >= nextFireTime)
+        {
+            AudioManager.Instance.PlaySound(AudioManager.Instance.shoot);
+            PhaserWeapon.Instance.Shoot();
+            nextFireTime = Time.time + fireRate;
         }
     }
+
     void FixedUpdate()
     {
-        rigidbody2D.linearVelocity = new Vector2(playerDirection.x * moveSpeed, playerDirection.y * moveSpeed);
+        rb.linearVelocity = playerDirection * moveSpeed;
+
         if (isBoosting)
         {
-            if(energy >= 0.2)
-            {
+            if (energy >= 0.2f)
                 energy -= useEnergy * Time.deltaTime;
-            }
             else
-            {
                 ExitBoost();
-            }
         }
         else
         {
             if (energy < maxEnergy)
-            {
                 energy += regenEnergy * Time.deltaTime;
-            }
         }
-            UIController.Instance.UpdateEnergySlider(energy, maxEnergy);
+
+        UIController.Instance.UpdateEnergySlider(energy, maxEnergy);
     }
 
     private void EnterBoost()
     {
-        AudioManager.Instance.PlaySound(AudioManager.Instance.boost); // Play boost sound
+        AudioManager.Instance.PlaySound(AudioManager.Instance.boost);
         animator.SetBool("boosting", true);
         boost = boostPower;
         isBoosting = true;
@@ -119,45 +122,66 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Obstacle"))
         {
-            health -= 1f; // Example damage value
+            health -= 1f;
+            if(PhaserWeapon.Instance.weaponLevel > 0)
+                PhaserWeapon.Instance.weaponLevel--;
             UIController.Instance.UpdateHealthSlider(health, maxHealth);
-            AudioManager.Instance.PlaySound(AudioManager.Instance.playerHit); // Play hit sound
-            ActivateInvincibility(1.6f); // Start invincibility mode for 1.6 second
+            AudioManager.Instance.PlaySound(AudioManager.Instance.playerHit);
+            ActivateInvincibility(1.6f);
+
             if (health <= 0)
             {
-                boost = 0f; // Reset boost when health is zero or below
-                gameObject.SetActive(false); // Disable the player if health is zero or below
-                AudioManager.Instance.PlaySound(AudioManager.Instance.spaceBoom); // Play explosion sound
-                Instantiate(destroyEffect, transform.position, transform.rotation);
-                GameManager.Instance.GameOver(); // Call GameOver method from GameManager
+                PlayerDeath();
             }
+        }else if (collision.gameObject.CompareTag("Critter"))
+        {
+            Critter critter = collision.gameObject.GetComponent<Critter>();
+            if (critter != null) critter.OnHitByBullet();
+        }else if (collision.gameObject.CompareTag("Boss"))
+        {
+            PlayerDeath();
         }
     }
 
-    // Call this when the player is hit
+    private void PlayerDeath()
+    {
+        boost = 0f;
+        gameObject.SetActive(false);
+        AudioManager.Instance.PlaySound(AudioManager.Instance.spaceBoom);
+        Instantiate(destroyEffect, transform.position, transform.rotation);
+        if (GameManager.Instance.timer < PlayerPrefs.GetFloat("HighestScore", 0))
+        {
+            PlayerPrefs.SetFloat("HighestScore", GameManager.Instance.timer);
+            PlayerPrefs.Save();
+        } 
+        else
+            PlayerPrefs.SetFloat("CurrentTimer", GameManager.Instance.timer);
+        GameManager.Instance.GameOver();
+    }
+
     public void ActivateInvincibility(float duration)
     {
         if (!isInvincible)
-        {
             StartCoroutine(InvincibilityCoroutine(duration));
-        }
     }
 
     private IEnumerator InvincibilityCoroutine(float duration)
     {
         isInvincible = true;
-        float blinkInterval = 0.2f; // Adjust blink speed (smaller = faster)
+        float blinkInterval = 0.2f;
         float elapsedTime = 0f;
-        collider2D.enabled = false; // Disable collider to prevent further collisions
+        col.enabled = false;
+        shield.SetActive(true);
         while (elapsedTime < duration)
         {
-            // Toggle sprite visibility for blinking
             playerSprite.enabled = !playerSprite.enabled;
             elapsedTime += blinkInterval;
             yield return new WaitForSeconds(blinkInterval);
         }
-        playerSprite.enabled = true ; // Ensure the player is visible at the end
-        collider2D.enabled = true; // Re-enable collider after invincibility ends
-        isInvincible = false; // Set invincible mode off after 1 second
+
+        playerSprite.enabled = true;
+        col.enabled = true;
+        isInvincible = false;
+        shield.SetActive(false);
     }
 }

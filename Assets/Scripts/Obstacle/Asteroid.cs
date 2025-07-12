@@ -7,25 +7,29 @@ public class Asteroid : MonoBehaviour
     private FlashWhite flashWhite;
 
     [SerializeField] private Sprite[] asteroidSprites;
-    [SerializeField] private float lives;
-    [SerializeField] private GameObject destroyEffect; // Reference to the destroy effect prefab
+    [SerializeField] private float lives = 3f;
+    [SerializeField] private GameObject destroyEffect;
+    [SerializeField] private GameObject starPrefab;
+
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         flashWhite = GetComponent<FlashWhite>();
         spriteRenderer.sprite = asteroidSprites[Random.Range(0, asteroidSprites.Length)];
+
         rb = GetComponent<Rigidbody2D>();
-        float pushX = Random.Range(-1f, 0);
+        float pushX = Random.Range(-1f, 0f);
         float pushY = Random.Range(-1f, 1f);
         rb.linearVelocity = new Vector2(pushX, pushY);
+
     }
 
-    // Update is called once per frame
     void Update()
     {
         float moveX = GameManager.Instance.worldSpeed * PlayerController.Instance.boost * Time.deltaTime;
-        transform.position += new Vector3(moveX, 0);
-        if(transform.position.x < -11f)
+        transform.position += new Vector3(moveX, 0f, 0f);
+
+        if (transform.position.x < -11f)
         {
             Destroy(gameObject);
         }
@@ -34,19 +38,24 @@ public class Asteroid : MonoBehaviour
     public void TakeDamage(float dmg)
     {
         lives -= dmg;
+
         if (lives > 0)
         {
-            flashWhite.Flash(); // Flash the asteroid when it takes damage
-        }else {
-            AudioManager.Instance.PlaySound(AudioManager.Instance.asteroidDestroy); // Play the asteroid destroy sound
-            Destroy(gameObject);
-            // Instantiate the destroy effect at the asteroid's position
+            flashWhite.Flash(); // Nháy trắng khi bị bắn
+        }
+        else
+        {
+            AudioManager.Instance.PlaySound(AudioManager.Instance.asteroidDestroy); // Âm thanh phá hủy
             Instantiate(destroyEffect, transform.position, transform.rotation);
-            if(Random.value < 0.25f) // 25% chance to spawn a star
+            Destroy(gameObject);
+
+            // 25% có sao
+            if (Random.value < 0.25f && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level1")
             {
-                Instantiate(ObjectSpawner.Instance.starPrefab, transform.position, transform.rotation);
+                Instantiate(starPrefab, transform.position, transform.rotation);
             }
-            GameManager.Instance.AddAsteroidCount(); // Increment the asteroid count in the game manager
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Level1")
+                Level1Manager.Instance.AddAsteroidCount(); // Cộng số asteroid bị phá
         }
     }
 

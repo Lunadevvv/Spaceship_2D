@@ -1,29 +1,34 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PhaserWeapon : Weapon
 {
-    public static PhaserWeapon Instance; // Create an instance to use public variable (Singleton)
+    public static PhaserWeapon Instance;
 
-    //[SerializeField] private GameObject phaserPrefab; // Reference to the Phaser prefab
-    [SerializeField] private ObjectPool bulletPool; // Reference to the bullet pool for Phaser bullets
+    [SerializeField] private ObjectPool bulletPool;
 
-    public void Awake()
+    private void Awake()
     {
-        if (Instance != null) // Instance already existed. Make sure not duplicate
-        {
+        if (Instance != null && Instance != this)
             Destroy(gameObject);
-        }
         else
-        {
             Instance = this;
-        }
     }
 
     public void Shoot()
     {
-        //Instantiate(phaserPrefab, transform.position, transform.rotation);
-        GameObject bullet = bulletPool.GetPooledObject(); // Get a bullet from the pool
-        bullet.transform.position = transform.position; // Set the bullet's position to the weapon's position
-        bullet.SetActive(true); // Activate the bullet
+        for (int i = 0; i < stats[weaponLevel].amount; i++)
+        {
+            GameObject bullet = bulletPool.GetPooledObject(); // Get a bullet from the pool
+            float yPos = transform.position.y;
+            if (stats[weaponLevel].amount > 1)
+            {
+                float spacing = stats[weaponLevel].range / (stats[weaponLevel].amount - 1);
+                yPos = transform.position.y - (stats[weaponLevel].range / 2) + i * spacing;
+            }
+            bullet.transform.position = new Vector2(transform.position.x, yPos); // Set the bullet's position to the weapon's position
+            bullet.SetActive(true); // Activate the bullet
+            
+        }
     }
 }

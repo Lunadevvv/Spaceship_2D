@@ -3,59 +3,46 @@ using UnityEngine;
 
 public class ObjectPool : MonoBehaviour
 {
-    public static ObjectPool Instance; // Create an instance to use public variable (Singleton)
-    
-    // This class is a placeholder for the object pool system.
-    // It can be used to manage the pooling of game objects to optimize performance.
     public GameObject prefab;
-    public int poolSize = 5;
+    public int poolSize = 10;
+    public bool canExpand = true;
+
     private List<GameObject> pool;
-    private void Awake()
-    {
-        if (Instance != null) // Instance already existed. Make sure not duplicate
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            Instance = this;
-        }
-    }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        CreatePool();
-    }
-
-    private void CreatePool()
+    private void Start()
     {
         pool = new List<GameObject>();
         for (int i = 0; i < poolSize; i++)
         {
-            CreateNewObject();
+            GameObject obj = Instantiate(prefab, transform);
+            obj.SetActive(false);
+            pool.Add(obj);
         }
-    }
-
-    private GameObject CreateNewObject()
-    {
-        GameObject obj = Instantiate(prefab, transform);
-        obj.SetActive(false);
-        pool.Add(obj);
-        return obj;
     }
 
     public GameObject GetPooledObject()
     {
-        foreach (GameObject obj in pool)
+        for (int i = pool.Count - 1; i >= 0; i--)
         {
-            if (!obj.activeSelf)
+            GameObject obj = pool[i];
+            if (obj == null)
             {
-                return obj;
+                pool.RemoveAt(i);
+                continue;
             }
-        }
-        // If no inactive object is found, create a new one
-        return CreateNewObject();
-    }
 
+            if (!obj.activeSelf)
+                return obj;
+        }
+
+        if (canExpand)
+        {
+            GameObject newObj = Instantiate(prefab, transform);
+            newObj.SetActive(false);
+            pool.Add(newObj);
+            return newObj;
+        }
+
+        return null;
+    }
 }
