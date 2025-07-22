@@ -19,7 +19,7 @@ public class GameOverMenuManager : MonoBehaviour
 
     public void NewGame()
     {
-        SceneManager.LoadScene("Instruction");
+        SceneManager.LoadScene("Level1");
     }
 
     public void MainMenu()

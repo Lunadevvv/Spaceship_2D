@@ -1074,7 +1074,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3212045255285407364, guid: 0a0f8ccaffefada4ead29996427bae42, type: 3}
       propertyPath: m_text
-      value: Let's go
+      value: BACK TO MENU
       objectReference: {fileID: 0}
     - target: {fileID: 3212045255285407364, guid: 0a0f8ccaffefada4ead29996427bae42, type: 3}
       propertyPath: m_fontSize
@@ -1114,7 +1114,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3414806569185703206, guid: 0a0f8ccaffefada4ead29996427bae42, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: NewGame
+      value: MainMenu
       objectReference: {fileID: 0}
     - target: {fileID: 3414806569185703206, guid: 0a0f8ccaffefada4ead29996427bae42, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_MethodName

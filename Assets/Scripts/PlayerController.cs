@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 
@@ -141,7 +141,21 @@ public class PlayerController : MonoBehaviour
         {
             PlayerDeath();
         }
+        else if (collision.gameObject.CompareTag("BossBullet"))
+        {
+            Destroy(collision.gameObject); // Xóa đạn
+            TakeDamage(1f); // Trừ máu player
+        }
     }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("BossBullet"))
+        {
+            TakeDamage(1f);
+            Destroy(collision.gameObject);
+        }
+    }
+
 
     private void PlayerDeath()
     {
@@ -163,6 +177,19 @@ public class PlayerController : MonoBehaviour
     {
         if (!isInvincible)
             StartCoroutine(InvincibilityCoroutine(duration));
+    }
+    public void TakeDamage(float amount)
+    {
+        if (isInvincible) return;
+
+        health -= amount;
+        UIController.Instance.UpdateHealthSlider(health, maxHealth);
+        AudioManager.Instance.PlaySound(AudioManager.Instance.playerHit);
+
+        if (health <= 0)
+        {
+            PlayerDeath();
+        }
     }
 
     private IEnumerator InvincibilityCoroutine(float duration)
